@@ -2,34 +2,76 @@
 pipeline {
     agent any
 
+    environment {
+        APP_NAME = 'DevOpsCompany'
+        BUILD_DIR = 'website'
+    }
+
     stages {
+
         stage('Welcome') {
             steps {
-                echo 'Welcome to DevOps!'
+                echo 'Starting DevOps Website Pipeline'
+            }
+        }
+
+        stage('Check Environment') {
+            steps {
+                sh '''
+                    echo "Application: $APP_NAME"
+                    echo "Build Number: $BUILD_NUMBER"
+                    echo "Workspace: $WORKSPACE"
+                    echo "Checking Linux environment..."
+                    pwd
+                    ls -la
+                '''
             }
         }
 
         stage('Create Website') {
             steps {
                 sh '''
-                    set -eu
+                    mkdir -p "$BUILD_DIR"
 
-                    mkdir -p xyz
+                    cat > "$BUILD_DIR/index.html" <<'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>DevOps Company</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #eef2ff;
+            padding: 60px 20px;
+        }
+        h1 {
+            color: #174ea6;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            margin: auto;
+            max-width: 600px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Welcome to DevOps Company!</h1>
+        <p>Built automatically using Jenkins Pipeline.</p>
+        <p>Tools: GitHub, Jenkins, Docker and AWS.</p>
+        <p>Status: Website build successful.</p>
+    </div>
+</body>
+</html>
+EOF
 
-                    cat > xyz/index.html <<'EOF'
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Welcome to DevOps</title>
-                    </head>
-                    <body>
-                        <h1>Welcome to DevOps!</h1>
-                        <p>Website created using Jenkins Pipeline.</p>
-                    </body>
-                    </html>
-                    EOF
-
-                    echo "Website created successfully."
+                    echo "Website files created."
                 '''
             }
         }
@@ -37,16 +79,35 @@ pipeline {
         stage('Test Website') {
             steps {
                 sh '''
-                    test -f xyz/index.html
-                    grep -q "Welcome to DevOps!" xyz/index.html
-                    echo "Website test passed!"
+                    test -f "$BUILD_DIR/index.html"
+                    grep -q "Welcome to DevOps Company!" \
+                        "$BUILD_DIR/index.html"
+                    grep -q "Jenkins Pipeline" \
+                        "$BUILD_DIR/index.html"
+
+                    echo "All website tests passed!"
                 '''
             }
         }
 
-        stage('Archive Website') {
+        stage('Build Report') {
             steps {
-                archiveArtifacts artifacts: 'xyz/**',
+                sh '''
+                    {
+                        echo "Application: $APP_NAME"
+                        echo "Build Number: $BUILD_NUMBER"
+                        echo "Build Date: $(date)"
+                        echo "Result: SUCCESS"
+                    } > "$BUILD_DIR/build-report.txt"
+
+                    cat "$BUILD_DIR/build-report.txt"
+                '''
+            }
+        }
+
+        stage('Archive Artifacts') {
+            steps {
+                archiveArtifacts artifacts: 'website/**',
                                  fingerprint: true
             }
         }
@@ -54,10 +115,15 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'SUCCESS: Website built and archived!'
         }
+
         failure {
-            echo 'Pipeline failed. Check Console Output.'
+            echo 'FAILURE: Check the Console Output.'
+        }
+
+        always {
+            echo 'Pipeline execution finished.'
         }
     }
 }
