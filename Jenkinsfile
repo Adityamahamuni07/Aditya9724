@@ -3,7 +3,6 @@ pipeline {
     agent any
 
     stages {
-
         stage('Welcome') {
             steps {
                 echo 'Welcome to DevOps!'
@@ -13,35 +12,24 @@ pipeline {
         stage('Create Website') {
             steps {
                 sh '''
+                    set -eu
+
                     mkdir -p xyz
 
                     cat > xyz/index.html <<'EOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Welcome to DevOps</title>
-    <style>
-        body {
-            background-color: #101827;
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding-top: 100px;
-        }
-        h1 {
-            color: #00e5a8;
-        }
-    </style>
-</head>
-<body>
-    <h1>Welcome to DevOps!</h1>
-    <p>My website is created using Jenkins Pipeline.</p>
-    <p>Learning AWS, Linux, Git, Docker and CI/CD.</p>
-</body>
-</html>
-EOF
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Welcome to DevOps</title>
+                    </head>
+                    <body>
+                        <h1>Welcome to DevOps!</h1>
+                        <p>Website created using Jenkins Pipeline.</p>
+                    </body>
+                    </html>
+                    EOF
 
-                    echo "Website created successfully!"
+                    echo "Website created successfully."
                 '''
             }
         }
@@ -49,9 +37,8 @@ EOF
         stage('Test Website') {
             steps {
                 sh '''
-                    test -s xyz/index.html
+                    test -f xyz/index.html
                     grep -q "Welcome to DevOps!" xyz/index.html
-
                     echo "Website test passed!"
                 '''
             }
@@ -59,7 +46,7 @@ EOF
 
         stage('Archive Website') {
             steps {
-                archiveArtifacts artifacts: 'xyz/index.html',
+                archiveArtifacts artifacts: 'xyz/**',
                                  fingerprint: true
             }
         }
@@ -67,9 +54,8 @@ EOF
 
     post {
         success {
-            echo 'Welcome DevOps website pipeline completed!'
+            echo 'Pipeline completed successfully!'
         }
-
         failure {
             echo 'Pipeline failed. Check Console Output.'
         }
